@@ -59,6 +59,7 @@ jobs:
           path: ${{ env.ZOMBIENET_DIR }}
           #run-id: ${{ github.event.workflow_run.id }}
           run-id: 16482755124
+          repository: AstarNetwork/Astar
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: List downloaded files (debug)
