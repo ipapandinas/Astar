@@ -92,6 +92,12 @@ jobs:
           repository: AstarNetwork/Astar
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: List downloaded files (debug)
+        working-directory: ${{ env.ZOMBIENET_DIR }}
+        run: |
+          echo "Files in zombienet directory:"
+          ls -la
+
       - name: Download and setup client
         run: |
           echo "Setting up client version: ${{ matrix.client.tag }}"
@@ -122,5 +128,6 @@ jobs:
         env:
           CHAIN: ${{ matrix.chain }}-dev
         run: |
-          echo "🧪 Testing ${{ matrix.chain }} runtime compatibility with client ${{ matrix.client.tag }}"
+          version=$(cat "${{ matrix.chain }}-srtool-digest.json" | jq -r '.version')
+          echo "🧪 Testing ${{ matrix.chain }} v${version} runtime compatibility with client ${{ matrix.client.tag }}"
           zombienet -p native test smoke_runtime_upgrade.zndsl
