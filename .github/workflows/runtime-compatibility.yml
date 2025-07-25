@@ -84,15 +84,6 @@ jobs:
           repository: AstarNetwork/Astar
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download and setup client
-        run: |
-          echo "Setting up client version: ${{ matrix.client.tag }}"
-          curl -L -o astar-collator.tar.gz "${{ matrix.client.asset_url }}"
-          tar -xzf astar-collator.tar.gz
-          mv astar-collator ${{ env.ZOMBIENET_DIR }}/astar-collator
-          chmod +x ${{ env.ZOMBIENET_DIR }}/astar-collator
-          rm astar-collator.tar.gz
-
       - name: Download and setup clients
         run: |
           CLIENT_TAGS_ARRAY=($CLIENT_TAGS)
