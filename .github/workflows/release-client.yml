@@ -46,6 +46,7 @@ jobs:
         run: |
           mkdir -p ${{ matrix.os }}-${{ matrix.arch }}-bin
 
+      # Instead create a dummy file to act as binary
       - name: Create dummy binary
         run: |
           echo "dummy content for testing" > \
@@ -53,9 +54,9 @@ jobs:
 
       - name: Package dummy binary
         run: |
-          cd "${{ matrix.os }}-${{ matrix.arch }}-bin"
-          chmod +x astar-collator
-          tar zcvf astar-collator.tar.gz astar-collator
+          asset_dir="${{ matrix.os }}-${{ matrix.arch }}-bin"
+          chmod +x "$asset_dir/astar-collator"
+          tar -C "$asset_dir" -zcvf "$asset_dir/astar-collator.tar.gz" astar-collator
 
       - name: Upload dummy asset to release
         env:
@@ -63,6 +64,6 @@ jobs:
         run: |
           asset_dir="${{ matrix.os }}-${{ matrix.arch }}-bin"
           asset_name="astar-collator-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz"
-      
+          
           mv "$asset_dir/astar-collator.tar.gz" "$asset_dir/$asset_name"
           gh release upload "${{ github.ref_name }}" "$asset_dir/$asset_name" --clobber
