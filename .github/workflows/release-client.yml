@@ -11,24 +11,36 @@ permissions:
 jobs:
   publish-release-draft:
     runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.compute-tag.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Generate dummy body
+      # Determine a real tag even for workflow_dispatch
+      - name: Compute release tag
+        id: compute-tag
         run: |
-          echo "This is a test release body." > body.md
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "release_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            tag="manual-$(date +'%Y%m%d-%H%M%S')"
+            echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate dummy body
+        run: echo "This is a test release body." > body.md
 
       - name: Create Release Draft
-        id: create-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
+          gh release create "${{ steps.compute-tag.outputs.release_tag }}" \
             --draft \
-            --title "Test Release: ${{ github.ref_name }}" \
+            --title "Test Release: ${{ steps.compute-tag.outputs.release_tag }}" \
             --notes-file body.md
+
 
   upload-binaries:
     needs: publish-release-draft
@@ -36,21 +48,17 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu", "macOS"]
-        # arch: ["x86_64", "aarch64"]
         arch: ["x86_64"]
-        exclude:
-          - os: macOS
-            arch: aarch64
     steps:
-      - name: Create dummy binary folder
-        run: |
-          mkdir -p ${{ matrix.os }}-${{ matrix.arch }}-bin
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      # Instead create a dummy file to act as binary
+      - name: Create dummy binary folder
+        run: mkdir -p "${{ matrix.os }}-${{ matrix.arch }}-bin"
+
       - name: Create dummy binary
-        run: |
-          echo "dummy content for testing" > \
-          "${{ matrix.os }}-${{ matrix.arch }}-bin/astar-collator"
+        run: echo "dummy content" > "${{ matrix.os }}-${{ matrix.arch }}-bin/astar-collator"
 
       - name: Package dummy binary
         run: |
@@ -63,7 +71,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           asset_dir="${{ matrix.os }}-${{ matrix.arch }}-bin"
-          asset_name="astar-collator-${{ github.ref_name }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz"
-          
+          release_tag="${{ needs.publish-release-draft.outputs.release_tag }}"
+          asset_name="astar-collator-${release_tag}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz"
+
           mv "$asset_dir/astar-collator.tar.gz" "$asset_dir/$asset_name"
-          gh release upload "${{ github.ref_name }}" "$asset_dir/$asset_name" --clobber
+          gh release upload "$release_tag" "$asset_dir/$asset_name" --clobber
