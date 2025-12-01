@@ -40,7 +40,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ steps.compute-tag.outputs.release_tag }}" \
-            --target "$GITHUB_SHA" \
             --draft \
             --title "Test Release: ${{ steps.compute-tag.outputs.release_tag }}" \
             --notes-file body.md
