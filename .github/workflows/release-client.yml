@@ -4,6 +4,11 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*
   workflow_dispatch:
+    inputs:
+      test_tag:
+        description: 'Docker/Git tag to use for manual runs (e.g. v5.47.0-test)'
+        required: true
+        default: ''
 
 permissions:
   contents: write
